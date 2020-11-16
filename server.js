@@ -11,7 +11,7 @@ wss.on('connection', async (ws, req) => {
 
   urlJsObj.CliendId = 'gamytech-client-id'
   console.log(urlJsObj.CliendId)
-  const resp = await axios.get('http://localhost:3000/accounts/' + urlJsObj.CliendId)
+  const resp = await axios.get('http://auth-provider.gamy-tech.com/accounts/' + urlJsObj.CliendId)
   console.log(resp.data.websocketUrl)
 
   setTimeout(() => {
@@ -22,11 +22,13 @@ wss.on('connection', async (ws, req) => {
       ws.send(msg)
     })
 
-    const XYZCompanyWebSocket = new WebSocket(resp.data.websocketUrl + parsedURL)
-    XYZCompanyWebSocket.on('message', msg => {
-      console.log('XYZCompanyWebSocket -> :', msg)
-      ws.send(msg)
-    })
+    if (urlJsObj.CliendId !== 'gamytech-client-id') {
+      const XYZCompanyWebSocket = new WebSocket(resp.data.websocketUrl + parsedURL)
+      XYZCompanyWebSocket.on('message', msg => {
+        console.log('XYZCompanyWebSocket -> :', msg)
+        ws.send(msg)
+      })
+    }
   
     ws.on('message', msg => {
       const convertedToJS = JSON.parse(msg)
