@@ -31,7 +31,7 @@ wss.on('connection', async (ws, req) => {
     ws.on('message', msg => {
       const convertedToJS = JSON.parse(msg)
 
-      if (urlJsObj.CliendId === 'gamytech-client-id') {
+      if (urlJsObj.CliendId !== 'gamytech-client-id') {
         switch (convertedToJS.Service) {
           case 'CashIn':
           case 'CashInApco':
