@@ -22,7 +22,6 @@ wss.on('connection', async (ws, req) => {
       // case 'DeleteCard':
       // case 'ForgotPassword':
       // case 'ResetPassword':
-        ws.send('Proute')
         break;
     }
   })
