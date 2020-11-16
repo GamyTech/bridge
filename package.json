@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.21.0",
     "chalk": "^4.1.0",
     "node-forge": "^0.10.0",
     "nodemon": "^2.0.6",

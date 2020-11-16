@@ -1,49 +1,61 @@
-const forge = require('node-forge')
+const axios = require('axios')
 const WebSocket = require('ws')
 const server = require('http').createServer()
-const wss = new WebSocket.Server({ server, port: 8080 })
+const wss = new WebSocket.Server({ server, port: 3000 })
+const decrypt = require('./helpers/AesBase64Crypto')
 
-const PASSWORD = '*M0$#3g@mYT3c#3759*'
-const SALT = 'asdfghjk'
-const IV = '0123456789abcdef'
-
-const key = forge.pkcs5.pbkdf2(PASSWORD, SALT, 10, 16);
-
-
-const decrypt = (encryptedMsg) => {
-  const bytes = forge.util.decode64(encryptedMsg)
-  let decipher = forge.cipher.createDecipher('AES-CBC', key)
-  decipher.start({ iv: IV })
-  decipher.update(forge.util.createBuffer(bytes))
-  const result = decipher.finish()
-  return decipher.output.toString()
-}
-
-
-wss.on('connection', (ws, req) => {
+wss.on('connection', async (ws, req) => {
   console.log('Someone connected')
-  const onlyWhatWeWant = req.url.replace('/backend/', '')
-  setTimeout(() => {
-    
-    const socketToJSP = new WebSocket('ws://srv0.gamy-tech.com:8080/GamyTechServer2.2B/game/' + onlyWhatWeWant)
-    socketToJSP.on('message', msg => {
-      const decodedMsg = decrypt(msg)
-      const convertedToJS = JSON.parse(decodedMsg)
-      // console.log(convertedToJS.Service)
-      if (convertedToJS.Service === undefined) {
-        // console.log(decodedMsg)
-      }
+  const parsedURL = req.url.replace('/backend/', '')
+  const urlJsObj = JSON.parse(decodeURI(parsedURL))
 
+  urlJsObj.CliendId = 'gamytech-client-id'
+  console.log(urlJsObj.CliendId)
+  const resp = await axios.get('http://localhost:3000/accounts/' + urlJsObj.CliendId)
+  console.log(resp.data.websocketUrl)
+
+  setTimeout(() => {
+    const socketToJSP = new WebSocket('ws://srv0.gamy-tech.com:8080/GamyTechServer2.2B/game/' + parsedURL)
+    socketToJSP.on('message', msg => {
+      // const decodedMsg = decrypt(msg)
+      // const convertedToJS = JSON.parse(decodedMsg)
+      ws.send(msg)
+    })
+
+    const XYZCompanyWebSocket = new WebSocket(resp.data.websocketUrl + parsedURL)
+    XYZCompanyWebSocket.on('message', msg => {
+      console.log('XYZCompanyWebSocket -> :', msg)
       ws.send(msg)
     })
   
     ws.on('message', msg => {
+      const convertedToJS = JSON.parse(msg)
 
-      console.log(msg)
-      socketToJSP.send(msg)
+      if (urlJsObj.CliendId === 'gamytech-client-id') {
+        switch (convertedToJS.Service) {
+          case 'CashIn':
+          case 'CashInApco':
+          case 'CashOutRequest':
+          case 'Login':
+          case 'Logout':
+          case 'PurchaseItem':
+          case 'RegisterUser':
+          // case 'ApiRequest':
+          // case 'ApiUpdate':
+          // case 'DeleteCard':
+          // case 'ForgotPassword':
+          // case 'ResetPassword':
+            XYZCompanyWebSocket.send(msg)
+            break;
+          default:
+            socketToJSP.send(msg)
+            break;
+        }
+      } else {
+        socketToJSP.send(msg)
+      }
     })
   }, 1000)
-
 })
 
 
