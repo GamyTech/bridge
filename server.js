@@ -8,7 +8,7 @@ wss.on('connection', async (ws, req) => {
   console.log('Someone connected')
   const parsedURL = req.url.replace('/backend/', '')
   const urlJsObj = JSON.parse(decodeURI(parsedURL))
-  const resp = await axios.get('http://auth-provider.gamy-tech.com/accounts/' + urlJsObj.CliendId)
+  const resp = await axios.get('http://auth-provider.gamy-tech.com/accounts/' + urlJsObj.ClientId)
 
   setTimeout(() => {
     const socketToJSP = new WebSocket('ws://srv0.gamy-tech.com:8080/GamyTechServer2.2B/game/' + parsedURL)
@@ -29,7 +29,7 @@ wss.on('connection', async (ws, req) => {
     ws.on('message', msg => {
       const convertedToJS = JSON.parse(msg)
 
-      if (urlJsObj.CliendId !== 'gamytech-client-id') {
+      if (urlJsObj.ClientId !== 'gamytech-client-id') {
         switch (convertedToJS.Service) {
           case 'CashIn':
           case 'CashInApco':
