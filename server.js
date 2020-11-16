@@ -8,11 +8,7 @@ wss.on('connection', async (ws, req) => {
   console.log('Someone connected')
   const parsedURL = req.url.replace('/backend/', '')
   const urlJsObj = JSON.parse(decodeURI(parsedURL))
-
-  urlJsObj.CliendId = 'gamytech-client-id'
-  console.log(urlJsObj.CliendId)
   const resp = await axios.get('http://auth-provider.gamy-tech.com/accounts/' + urlJsObj.CliendId)
-  console.log(resp.data.websocketUrl)
 
   setTimeout(() => {
     const socketToJSP = new WebSocket('ws://srv0.gamy-tech.com:8080/GamyTechServer2.2B/game/' + parsedURL)
