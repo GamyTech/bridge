@@ -15,10 +15,7 @@ wss.on('connection', async (ws, req) => {
   let XYZCompanyWebSocket
   if (urlJsObj.CliendId !== 'gamytech-client-id') {
     XYZCompanyWebSocket = new WebSocket(resp.data.websocketUrl)
-    XYZCompanyWebSocket.on('message', msg => {
-      console.log('XYZCompanyWebSocket -> :', msg)
-      ws.send(msg)
-    })
+    XYZCompanyWebSocket.on('message', msg => ws.send(msg))
   }
   
   ws.on('message', msg => {
