@@ -7,17 +7,11 @@ To launch the server you only need to type the following command. It will instal
 $ npm start
 ```
 
-## Redirections
+## Example of Client WebSocket server
 
-Currently, the redirections that are made are the following:
-```
-case 'CashIn':
-case 'CashInApco':
-case 'CashOutRequest':
-case 'Login':
-case 'Logout':
-case 'PurchaseItem':
-case 'RegisterUser':
-```
+You can find an example server by checking the client.js file.
+You can test by running the following command:
 
-It will redirect the following websocket endpoints requests to a specific server given by the cliend id provider.
+```bash
+$ node client.js
+```
