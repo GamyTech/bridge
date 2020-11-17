@@ -23,18 +23,14 @@ wss.on('connection', async (ws, req) => {
 
     if (urlJsObj.ClientId !== 'gamytech-client-id') {
       switch (convertedToJS.Service) {
-        case 'CashIn':
-        case 'CashInApco':
-        case 'CashOutRequest':
         case 'Login':
         case 'Logout':
-        case 'PurchaseItem':
         case 'RegisterUser':
-        // case 'ApiRequest':
-        // case 'ApiUpdate':
-        // case 'DeleteCard':
-        // case 'ForgotPassword':
-        // case 'ResetPassword':
+        case 'ForgotPassword':
+        case 'ResetPassword':
+        case 'CashIn':
+        case 'CashInSkrill':
+        case 'CashOutRequest':
           XYZCompanyWebSocket.send(msg)
           break;
         default:
