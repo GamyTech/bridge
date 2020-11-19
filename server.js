@@ -5,8 +5,8 @@ const wss = new WebSocket.Server({ server, port: 3000 })
 
 wss.on('connection', async (ws, req) => {
   console.log('Someone connected')
-  const parsedURL = req.url.replace('/backend/', '')
-  const urlJsObj = JSON.parse(decodeURI(parsedURL))
+  const parsedURL = decodeURI(req.url).replace('/', '')
+  const urlJsObj = JSON.parse(parsedURL)
   const resp = await axios.get('http://auth-provider.gamy-tech.com/accounts/' + urlJsObj.ClientId)
 
   const socketToJSP = new WebSocket('ws://srv0.gamy-tech.com:8080/GamyTechServer2.2B/game/' + parsedURL)
