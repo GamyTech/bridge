@@ -36,7 +36,7 @@ wss.on('connection', async (ws, req) => {
       switch (convertedToJS.Service) {
         case 'Login': {
           if (urlJsObj.Token !== undefined) {
-            const user = await getUserWithToken(resp.data.externalApiUrl, urlJsObj.Token)
+            const user = await getUserWithToken(resp.data.websocket_url, urlJsObj.Token)
 
             socketToJSP.send(JSON.stringify({
               Service: 'Login',
