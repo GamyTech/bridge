@@ -1,12 +1,12 @@
 const axios = require('axios')
 const WebSocket = require('ws')
 const server = require('http').createServer()
-const wss = new WebSocket.Server({ server, port: 3000 })
-const axios = require('axios')
+require('dotenv').config()
+const wss = new WebSocket.Server({ server, port: process.env.WEBSOCKET_PORT })
 
 const getUserWithToken = async (externalApiUrl, token) => {
   try {
-    const response = await axios.get(externalApiUrl + '/get-user-with-token', null, {
+    const response = await axios.get(externalApiUrl + '/get-user-with-token', {
       headers: {
         Authorization: 'Bearer ' + token
       }
@@ -36,15 +36,19 @@ wss.on('connection', async (ws, req) => {
       switch (convertedToJS.Service) {
         case 'Login': {
           if (urlJsObj.Token !== undefined) {
-            const user = await getUserWithToken(resp.data.websocket_url, urlJsObj.Token)
+            const user = await getUserWithToken(resp.data.websocketUrl, urlJsObj.Token)
 
-            socketToJSP.send(JSON.stringify({
-              Service: 'Login',
-              Email: user.email,
-              UserName: user.user_name,
-              ClientId: urlJsObj.ClientId,
-              DeviceId: urlJsObj.DeviceId
-            }))
+            setTimeout(() => {
+              socketToJSP.send(JSON.stringify({
+                Service: 'Login',
+                Email: user.email,
+                Balance: user.balance,
+                ExternalUserId: user.id,
+                UserName: user.user_name,
+                ClientId: urlJsObj.ClientId,
+                DeviceId: urlJsObj.DeviceId
+              }))
+            }, 500)
           }
         }
         default:
