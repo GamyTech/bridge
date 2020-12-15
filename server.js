@@ -3,6 +3,7 @@ const WebSocket = require('ws')
 const server = require('http').createServer()
 require('dotenv').config()
 const wss = new WebSocket.Server({ server, port: process.env.WEBSOCKET_PORT })
+const decrypt = require('./helpers/AesBase64Crypto')
 
 const getUserWithToken = async (externalApiUrl, token) => {
   try {
@@ -19,24 +20,56 @@ const getUserWithToken = async (externalApiUrl, token) => {
   }
 }
 
+const updateUserBalanceWithWebsocket = async (ws, newBalance) => {
+  try {
+    console.log('api => ', ws.externalApiUrl)
+    console.log('user id => ', ws.externalUserId)
+    console.log('user token => ', ws.token)
+    console.log('new balance => ', newBalance)
+    const response = await axios.patch(ws.externalApiUrl + '/users/' + ws.externalUserId, { balance: newBalance }, {
+      headers: {
+        Authorization: 'Bearer ' + ws.token,
+        ContentType: 'application/json'
+      }
+    })
+    if (response.status === 200) {
+      return response.data
+    }
+  } catch (error) {
+    console.log(error)
+  }
+}
+
 wss.on('connection', async (ws, req) => {
   console.log('Someone connected')
   const parsedURL = decodeURI(req.url).replace('/', '')
   const urlJsObj = JSON.parse(parsedURL)
   const resp = await axios.get('http://auth-provider.gamy-tech.com/accounts/' + urlJsObj.ClientId)
 
+  ws.externalApiUrl = resp.data.websocketUrl
+  ws.token = urlJsObj.Token
+
   const socketToJSP = new WebSocket('ws://srv0.gamy-tech.com:8080/GamyTechServer2.2B/game/' + parsedURL)
-  socketToJSP.on('message', msg => ws.send(msg))
+  socketToJSP.on('message', async msg => {
+    const decryptedMessage = JSON.parse(decrypt(msg))
+    if (urlJsObj.ClientId !== 'gamytech-client-id') {
+      if (decryptedMessage.Service === 'StoppedGame' && decryptedMessage.Wallet !== undefined) {
+        await updateUserBalanceWithWebsocket(ws, decryptedMessage.Wallet.Cash)
+      }
+    }
+
+    ws.send(msg)
+  })
   
   ws.on('message', async msg => {
     const convertedToJS = JSON.parse(msg)
-    console.log(convertedToJS)
 
     if (urlJsObj.ClientId !== 'gamytech-client-id') {
       switch (convertedToJS.Service) {
         case 'Login': {
           if (urlJsObj.Token !== undefined) {
             const user = await getUserWithToken(resp.data.websocketUrl, urlJsObj.Token)
+            ws.externalUserId = user.id
 
             setTimeout(() => {
               socketToJSP.send(JSON.stringify({
@@ -48,7 +81,7 @@ wss.on('connection', async (ws, req) => {
                 ClientId: urlJsObj.ClientId,
                 DeviceId: urlJsObj.DeviceId
               }))
-            }, 500)
+            }, 1000)
           }
         }
         default:
@@ -60,13 +93,3 @@ wss.on('connection', async (ws, req) => {
     }
   })
 })
-
-
-
-
-
-
-
-
-
-
