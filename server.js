@@ -94,7 +94,9 @@ wss.on('connection', async (ws, req) => {
               })
             )
 
-            socketToJSP.send(cryptedAndEncodedMessage)
+            setTimeout(() => {
+              socketToJSP.send(cryptedAndEncodedMessage)
+            }, 2000)
           }
         }
         default:
