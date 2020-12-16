@@ -52,9 +52,18 @@ wss.on('connection', async (ws, req) => {
   const socketToJSP = new WebSocket('ws://srv0.gamy-tech.com:8080/GamyTechServer2.2B/game/' + parsedURL)
   socketToJSP.on('message', async msg => {
     const decryptedMessage = JSON.parse(decrypt(msg))
+    console.log(decrypt(msg))
     if (urlJsObj.ClientId !== 'gamytech-client-id') {
+    // For the winner
       if (decryptedMessage.Service === 'StoppedGame' && decryptedMessage.Wallet !== undefined) {
-        await updateUserBalanceWithWebsocket(ws, decryptedMessage.Wallet.Cash)
+        ws.balance = ws.balance - decryptedMessage.Fee + decryptedMessage.Bet
+        await updateUserBalanceWithWebsocket(ws, ws.balance)
+      }
+
+      // For the loser
+      if (decryptedMessage.Service === 'StoppedGame' && decryptedMessage.Wallet === undefined) {
+        ws.balance = ws.balance - decryptedMessage.Fee
+        await updateUserBalanceWithWebsocket(ws, ws.balance)
       }
     }
 
@@ -63,6 +72,7 @@ wss.on('connection', async (ws, req) => {
   
   ws.on('message', async msg => {
     const convertedToJS = JSON.parse(msg)
+    console.log('SENDING =>', JSON.parse(msg))
 
     if (urlJsObj.ClientId !== 'gamytech-client-id') {
       switch (convertedToJS.Service) {
@@ -70,18 +80,17 @@ wss.on('connection', async (ws, req) => {
           if (urlJsObj.Token !== undefined) {
             const user = await getUserWithToken(resp.data.websocketUrl, urlJsObj.Token)
             ws.externalUserId = user.id
+            ws.balance = user.balance
 
-            setTimeout(() => {
-              socketToJSP.send(JSON.stringify({
-                Service: 'Login',
-                Email: user.email,
-                Balance: user.balance,
-                ExternalUserId: user.id,
-                UserName: user.user_name,
-                ClientId: urlJsObj.ClientId,
-                DeviceId: urlJsObj.DeviceId
-              }))
-            }, 1000)
+            socketToJSP.send(JSON.stringify({
+              Service: 'Login',
+              Email: user.email,
+              Balance: user.balance,
+              ExternalUserId: user.id,
+              UserName: user.user_name,
+              ClientId: urlJsObj.ClientId,
+              DeviceId: urlJsObj.DeviceId
+            }))
           }
         }
         default:
