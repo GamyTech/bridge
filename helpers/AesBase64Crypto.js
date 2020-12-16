@@ -15,4 +15,16 @@ const decrypt = (encryptedMsg) => {
   return decipher.output.toString()
 }
 
-module.exports = decrypt
+const encrypt = msg => {
+  const cipher = forge.cipher.createCipher('AES-CBC', key)
+  cipher.start({ iv: IV })
+  cipher.update(forge.util.createBuffer(msg))
+  cipher.finish()
+  const encrypted = cipher.output.data
+  console.log(encrypted)
+  const encryptedAndEncoded = forge.util.encode64(encrypted)
+  return encryptedAndEncoded
+}
+
+module.exports.decrypt = decrypt
+module.exports.encrypt = encrypt

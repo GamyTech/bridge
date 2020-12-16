@@ -3,7 +3,7 @@ const WebSocket = require('ws')
 const server = require('http').createServer()
 require('dotenv').config()
 const wss = new WebSocket.Server({ server, port: process.env.WEBSOCKET_PORT })
-const decrypt = require('./helpers/AesBase64Crypto')
+const AesBase64Crypto = require('./helpers/AesBase64Crypto')
 
 const getUserWithToken = async (externalApiUrl, token) => {
   try {
@@ -51,8 +51,8 @@ wss.on('connection', async (ws, req) => {
 
   const socketToJSP = new WebSocket('ws://srv0.gamy-tech.com:8080/GamyTechServer2.2B/game/' + parsedURL)
   socketToJSP.on('message', async msg => {
-    const decryptedMessage = JSON.parse(decrypt(msg))
-    console.log(decrypt(msg))
+    const decryptedMessage = JSON.parse(AesBase64Crypto.decrypt(msg))
+    console.log(AesBase64Crypto.decrypt(msg))
     if (urlJsObj.ClientId !== 'gamytech-client-id') {
     // For the winner
       if (decryptedMessage.Service === 'StoppedGame' && decryptedMessage.Wallet !== undefined) {
@@ -82,15 +82,19 @@ wss.on('connection', async (ws, req) => {
             ws.externalUserId = user.id
             ws.balance = user.balance
 
-            socketToJSP.send(JSON.stringify({
-              Service: 'Login',
-              Email: user.email,
-              Balance: user.balance,
-              ExternalUserId: user.id,
-              UserName: user.user_name,
-              ClientId: urlJsObj.ClientId,
-              DeviceId: urlJsObj.DeviceId
-            }))
+            const cryptedAndEncodedMessage = AesBase64Crypto.encrypt(
+              JSON.stringify({
+                Service: 'Login',
+                Email: user.email,
+                Balance: user.balance,
+                ExternalUserId: user.id,
+                UserName: user.user_name,
+                ClientId: urlJsObj.ClientId,
+                DeviceId: urlJsObj.DeviceId
+              })
+            )
+
+            socketToJSP.send(cryptedAndEncodedMessage)
           }
         }
         default:
